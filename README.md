@@ -49,18 +49,18 @@ You can choose one of the following algorithms for local minimization. Default i
 **a: amoeba**
  The amoeba routine takes a function of the following form:
 
- 			FUNCTION objFunc(theta)
- 			    use genericParams
- 			    use nrtype
+        FUNCTION objFunc(theta)
+            use genericParams
+            use nrtype
                  implicit none
- 			    REAL(DP),DIMENSION(p_nx),INTENT(IN) :: theta
- 			    REAL(DP) :: objFunc
- 			END FUNCTION objFunc
+            REAL(DP),DIMENSION(p_nx),INTENT(IN) :: theta
+            REAL(DP) :: objFunc
+        END FUNCTION objFunc
 
 **b: bobyq**
  The bobyq routine requires a function named dfovec. From the comments of the bobyq code,
 
-             SUBROUTINE dfovec(n, mv, x, v_err)
+        SUBROUTINE dfovec(n, mv, x, v_err)
 
  It must provide the values of the vector function v_err(x) : R^n to R^{mv}
  at the variables X(1),X(2),...,X(N), which are generated automatically in
@@ -69,12 +69,12 @@ You can choose one of the following algorithms for local minimization. Default i
  **d: DFPMIN**
  The DFPMIN procedure minimizes a user-written function Func of two or more independent variables using the Broyden-Fletcher-Goldfarb-Shanno variant of the Davidon-Fletcher-Powell method, using its gradient.
 
-              FUNCTION func(x)
-             	 USE UTILITIES, ONLY: DP
-             	 IMPLICIT NONE
-             	 REAL(DP), DIMENSION(:), INTENT(IN) :: x
-             	 REAL(DP) :: func
-              END FUNCTION func
+        FUNCTION func(x)
+        	 USE UTILITIES, ONLY: DP
+        	 IMPLICIT NONE
+        	 REAL(DP), DIMENSION(:), INTENT(IN) :: x
+        	 REAL(DP) :: func
+        END FUNCTION func
 
  -----------------------------------
  3. Description of Fortran source files
