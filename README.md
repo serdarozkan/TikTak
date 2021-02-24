@@ -1,7 +1,8 @@
 # TikTak
 ### A multistart global optimization algorithm
 
-[Click here](https://github.com/serdarozkan/TikTak/archive/main.zip) to download all files as a zip. 
+
+#### [Click here](https://github.com/serdarozkan/TikTak/archive/main.zip) to download all files as a zip. 
  -----------------------------------
   0. Contents
  -----------------------------------
