@@ -1,0 +1,70 @@
+! The configuration file for generic search.
+!
+! Do not edit the order of the parameters or data, as the parsing assumes the
+! order below is given.
+!
+! Format:
+! 1) Lines starting with ! are comments
+!	2) Do not have any blank lines. i.e. blank lines should at least have a ! in the first column
+!	3) A value of -1 means use the default value (not valid for all parameters)
+!
+! Settings:
+! 	1) # parameters - The dimension of the search space for minimization (must be > 0)
+! 	2) # moments targeting -
+! 	3) maximum evaluations - the maximum number of evaluations the minimization routine will execute
+!                            (if -1, then equals 40*(nx+1))
+! 	4) # draws - the number of sobol points to generate (if -1, then equals 500)
+!                 (if 0 then run local minimization around initial point given below)
+! 	5) # genuine/legitimate draws - the number of sobol points that result in a reasonable objective value
+!                              (if -1, then equals # draws+1)
+! 	6) maximum legitimate objective value - above which sobol points to be not counted for # legitimate draws
+!                             ( if <0.0, then equals to 100000000.0)
+! 	7) maximum points - the number of sobol points to search over for global extreme (should be
+!                       less than # draws) ( if -1, then equals min(200, #draws) )
+!   8) selectType - when choosing next point to evaluate, which point do we converge to?
+!                      0: The best point found so far
+!                      1: Lottery, where we rank top n points and the probability of picking
+!                         a point is inversely related to its rank.
+!                         Note: n is given in the next parameter
+!   9) lotteryPoints - the number of points to use in the lottery if specified in the previous parameter.
+!                      (if -1, then default to all i.e. maximum points)
+!
+!
+! Do not separate these parameters with any comments
+4         ! 1) # parameters
+8         ! 2) # moments targeting
+-1        ! 3) maximum # of evaluations
+20        ! 4) # draws
+10        ! 5) minimum # of genuine/legitimate draws
+50.0      ! 6) maximum legitimate objective value
+3         ! 7) maximum points
+0         ! 8) selectType,
+10        ! 9) lotteryPoints
+!
+!
+! for each parameter, the range of values. These lines are mandatory
+! Note: If simply updating sobol points, then these values are ignored
+! Do not separate these parameters with any comments
+-1.0, 1.0
+-1.0, 1.0
+-1.0, 1.0
+-1.0, 1.0
+!
+!
+! for each parameter, the initial guess. These lines are mandatory
+! Note: If simply updating sobol points, then these values are ignored
+! Do not separate these parameters with any comments
+0.811530031
+-0.185093302
+0.299819619
+0.196328895
+!
+!
+! for each parameter, the parameter bounds. These lines are mandatory (for simplified code)
+! but are ignored if not using bobyq as the minimization routine.
+! Note: If simply updating sobol points, then these values are ignored
+! Do not separate these parameters with any comments
+-3.0, 3.0
+-3.0, 3.0
+-3.0, 3.0
+-3.0, 3.0
