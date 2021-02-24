@@ -20,7 +20,7 @@
 - This algorithm evolved out of Fatih Guvenen's joint projects with Tony Smith, Serdar Ozkan, Fatih Karahan, Tatjana Kleineberg, and Antoine Arnaud.
 - This version of the code was written by Arun Kandanchatha and Serdar Ozkan.
 - Great care was taken to make it as compliant with Fortran 90 as possible, but there may be a couple of invocations to Fortran 95 intrinsics.
-- For all bugs please contact serdarozkan@gmail.com
+- For all bugs please contact serdarozkan@gmail.com (www.serdarozkan.me)
 
  -----------------------------------
  2. Executing the program
