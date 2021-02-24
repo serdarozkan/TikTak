@@ -32,10 +32,9 @@
 
  -1 = exit state: end all running instances
 
- 0 = cold start - The first invocation of the program, that will set up all the parallel helper files.
-             Should always be the parameter when this is the first attempt at solving the problem.
- 1 = warm start - after one process is already running, all helper programs should be invoked using
-             a warm start.
+ 0 = cold start - The first invocation of the program, that will set up all the parallel helper files. Should always be the parameter when this is the first attempt at solving the problem.
+
+ 1 = warm start - after one process is already running, all helper programs should be invoked using a warm start.
  2 = update number of Sobol points - update the sobol point parameters over which to search
  	          as well as the local optimizations from these sobol points, but assume everything
  	          else in the config file has not been changed.
