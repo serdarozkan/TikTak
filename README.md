@@ -57,7 +57,7 @@ You can choose one of the following algorithms for local minimization. Default i
  			    REAL(DP) :: objFunc
  			END FUNCTION objFunc
 
-** b: bobyq **
+**b: bobyq**
  The bobyq routine requires a function named dfovec. From the comments of the bobyq code,
 
              SUBROUTINE dfovec(n, mv, x, v_err)
@@ -66,7 +66,7 @@ You can choose one of the following algorithms for local minimization. Default i
  at the variables X(1),X(2),...,X(N), which are generated automatically in
  a way that satisfies the bounds given in XL and XU.
 
- ** d: DFPMIN **
+ **d: DFPMIN**
  The DFPMIN procedure minimizes a user-written function Func of two or more independent variables using the Broyden-Fletcher-Goldfarb-Shanno variant of the Davidon-Fletcher-Powell method, using its gradient.
 
               FUNCTION func(x)
