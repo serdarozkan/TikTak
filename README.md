@@ -61,7 +61,11 @@ You can choose one of the following algorithms for local minimization. Default i
  The bobyq routine requires a function named dfovec. From the comments of the bobyq code,
 
         SUBROUTINE dfovec(n, mv, x, v_err)
-
+          INTEGER, INTENT(IN)     :: np, nm
+          REAL(DP), DIMENSION(np), INTENT(IN)  :: x
+          REAL(DP), DIMENSION(nm),INTENT(OUT) :: v_err
+        END SUBROUTINE dfovec
+        
  It must provide the values of the vector function v_err(x) : R^n to R^{mv}
  at the variables X(1),X(2),...,X(N), which are generated automatically in
  a way that satisfies the bounds given in XL and XU.
