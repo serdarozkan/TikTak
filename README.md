@@ -1,4 +1,4 @@
-# TikTak V1.0
+# TikTak v1.0
 ### A multistart global optimization algorithm 
 
 
