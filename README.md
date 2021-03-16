@@ -20,6 +20,7 @@
  -----------------------------------
 - The main program for the TikTak global optimization algorithm.
 - This algorithm evolved out of Fatih Guvenen's joint projects with Tony Smith, Serdar Ozkan, Fatih Karahan, Tatjana Kleineberg, and Antoine Arnaud.
+- You can see the description of this algorithm in this [paper](https://fguvenendotcom.files.wordpress.com/2019/09/agk2019-september-nber-submit.pdf).
 - This version of the code was written by Arun Kandanchatha and Serdar Ozkan.
 - Great care was taken to make it as compliant with Fortran 90 as possible, but there may be a couple of invocations to Fortran 95 intrinsics.
 - For all bugs please contact serdarozkan@gmail.com (www.serdarozkan.me)
@@ -56,7 +57,7 @@ You can choose one of the following algorithms for local minimization. Default i
         FUNCTION objFunc(theta)
             use genericParams
             use nrtype
-                 implicit none
+            implicit none
             REAL(DP),DIMENSION(p_nx),INTENT(IN) :: theta
             REAL(DP) :: objFunc
         END FUNCTION objFunc
@@ -137,4 +138,26 @@ You can choose one of the following algorithms for local minimization. Default i
  -----------------------------------
  6. Specifying the objective function
  -----------------------------------
- The objective function should be specified in the file **"objective.f90"**. It requires the following functions  to be defined: objFun, dfovec, obj_initialize, diagnostic
+ The objective function should be specified in the file **"objective.f90"**. It requires the following functions and variable to be defined: objFun, dfovec, obj_initialize, diagnostic:
+ 
+        FUNCTION objFunc(theta)
+            use genericParams
+            use nrtype
+            implicit none
+            REAL(DP),DIMENSION(p_nx),INTENT(IN) :: theta
+            REAL(DP) :: objFunc
+        END FUNCTION objFunc
+      
+        SUBROUTINE dfovec(n, mv, x, v_err)
+          INTEGER, INTENT(IN)     :: np, nm
+          REAL(DP), DIMENSION(np), INTENT(IN)  :: x
+          REAL(DP), DIMENSION(nm),INTENT(OUT) :: v_err
+        END SUBROUTINE dfovec
+        
+        SUBROUTINE obj_initialize
+           ! This routine is called in the main program. 
+           ! It is used to load data in memory or other operations before minimization.
+           IMPLICIT NONE
+        END SUBROUTINE obj_initialize
+
+        if(diagnostic==1) " Calculate detailed moments or other statistics that are not needed during the minimization"
