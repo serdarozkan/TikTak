@@ -47,7 +47,7 @@ $(EXE_SH) : $(objects)
 #     by the .exe file
 #
 #--------------------------------------------
-nrtype.o: nrtype.F90
+nrtype.o: nrtype.f90
 	$(FC) -c $(F90CFLAGS) $<
 
 stateControl.o: stateControl.f90
@@ -56,7 +56,7 @@ stateControl.o: stateControl.f90
 genericParams.o: genericParams.f90
 	$(FC) -c $(F90CFLAGS) $<
 
-utilities.o: utilities.F90
+utilities.o: utilities.f90
 	$(FC) -c $(F90CFLAGS) $<
 
 simplex.o: simplex.f90
