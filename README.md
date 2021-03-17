@@ -29,7 +29,7 @@
  2. Executing the program
  -----------------------------------
  - To execute the program, run
- 	./GlobalSearch <-1|0|1|2|4|5> configfile <a|b|d>
+ 	./GlobalSearch <-1|0|1|2|3|4|5> configfile <a|b|d>
  - For help, run
  	./GlobalSearch
 
