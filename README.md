@@ -6,14 +6,14 @@
 #### [Click here](https://github.com/serdarozkan/TikTak/archive/main.zip) to download all files as a zip.
 ##### For all bugs please contact serdarozkan@gmail.com (www.serdarozkan.me)
  -----------------------------------
-  0. Contents
+  ### 0. Contents
  -----------------------------------
- 1.  About the program
+ 1. About the program
  2. Executing the program
  3. Description of source files
  4. Description of text files
  5. Description of .dat files
- 6. Specifying the objective function
+ 6. [Specifying the objective function](6.-Specifying-the-objective)
 
  -----------------------------------
  1. About the program
@@ -136,7 +136,7 @@ You can choose one of the following algorithms for local minimization. Default i
 |  FinalStart.dat |  the best global minimum so far as the starting point for running a local minimization one more using BOBYQA. Each line corresponds to one set of parameters and show the following info: the instance number running the code, the number of the sobol point,and associated parameters.
 
  -----------------------------------
- 6. Specifying the objective function
+ ### 6. Specifying the objective function
  -----------------------------------
  The objective function should be specified in the file **"objective.f90"**. It requires the following functions and variable to be defined: objFun, dfovec, obj_initialize, diagnostic:
  
