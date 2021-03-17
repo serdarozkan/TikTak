@@ -6,17 +6,17 @@
 #### [Click here](https://github.com/serdarozkan/TikTak/archive/main.zip) to download all files as a zip.
 ##### For all bugs please contact serdarozkan@gmail.com (www.serdarozkan.me)
  -----------------------------------
-  ### 0. Contents
+  ### Contents
  -----------------------------------
  1. About the program
  2. Executing the program
  3. Description of source files
  4. Description of text files
  5. Description of .dat files
- 6. [Specifying the objective function](6.-Specifying-the-objective)
+ 6. Specifying the objective function
 
  -----------------------------------
- 1. About the program
+ ### 1. About the program
  -----------------------------------
 - The main program for the TikTak global optimization algorithm.
 - This algorithm evolved out of Fatih Guvenen's joint projects with Tony Smith, Serdar Ozkan, Fatih Karahan, Tatjana Kleineberg, and Antoine Arnaud.
@@ -26,7 +26,7 @@
 - For all bugs please contact serdarozkan@gmail.com (www.serdarozkan.me)
 
  -----------------------------------
- 2. Executing the program
+ ### 2. Executing the program
  -----------------------------------
  - To execute the program, run
  	./GlobalSearch <-1|0|1|2|3|4|5> configfile <a|b|d>
@@ -86,7 +86,7 @@ You can choose one of the following algorithms for local minimization. Default i
         END FUNCTION func
 
  -----------------------------------
- 3. Description of Fortran source files
+ ### 3. Description of Fortran source files
  -----------------------------------
  **These files are specific for the generic search; you are not expected to make any changes.**
 
@@ -106,7 +106,7 @@ You can choose one of the following algorithms for local minimization. Default i
 |  objective.f90 |  the specific objective function being solved. Require the following functions to be defined: objFun, dfovec, obj_initialize, diagnostic. All model specific parameters are also defined within this file.
 
  -----------------------------------
- 4. Description of text files
+ ### 4. Description of text files
  -----------------------------------
 | Text File | Description |
 | ------ | ------ |
@@ -116,7 +116,7 @@ You can choose one of the following algorithms for local minimization. Default i
 
 
  -----------------------------------
- 5. Description of .dat files
+ ### 5. Description of .dat files
  -----------------------------------
 | .dat File | Description |
 | ------ | ------ |
