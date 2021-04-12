@@ -94,6 +94,7 @@ PROGRAM GlobalSearch
     IF (runDiagnostics .eqv. .TRUE.) THEN
       ! We are evaluating the objective value once for given parameter values in the config file.
       ! We run the simulation with diagnostic=1 so that it can produce moments other than the targets.
+      diagnostic=1
       print*,"Running diagnostics for the initial guess:"
       call initialize(option,seqNo,config)
       call obj_initialize
