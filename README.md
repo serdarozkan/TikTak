@@ -35,7 +35,7 @@
 | -1    | exit state: end all running instances
 |  0 |   cold start:  The first invocation of the program, that will set up all the parallel helper files. Should always be the parameter when this is the first attempt at solving the problem.
 |  1 |  warm start: after one process is already running, all helper programs should be invoked using a warm start.
-|   2 |  update number of Sobol points: update the sobol point parameters over which to search as well as the local optimizations from these sobol points, but assume everything else in the config file has not been changed.
+|   2 |  update number of Sobol points: update the Sobol point parameters over which to search as well as the local optimizations from these Sobol points, but assume everything else in the config file has not been changed.
 |   3 |  update number of local minimizations: Increase the number of local minimizations but keep everything else same in the config file. This option uses the results from previously found local minimums.
 |  4 |  Just evaluate the objective function once for given initial guess in the config file with diagnostic option.
 |   5 |  Run local minimization once for given initial guess in the config file.
@@ -95,7 +95,7 @@ You can choose one of the following algorithms for local minimization. Default i
 |  nrtype.f90  |  basic types used in all functions.
 |  simplex.f90 |  open source code that obtains an m-dimensional simplex centered on the origin. Used for amoeba search
 |  stateControl.f90 |  module that manages the genericSearch states using file I/O.
-|  utilities.f90  |  implementation of sobol and other helper functions.
+|  utilities.f90  |  implementation of Sobol and other helper functions.
  ---------------------------------
  ** These are all specific to the value function being solved. This files needs to be specified by the user.**
  | Source File | Description |
@@ -120,17 +120,17 @@ You can choose one of the following algorithms for local minimization. Default i
 |  internalConfig.dat | a copy of the config.txt file, but for use by parallel instances
 |  seq.dat |  the number of the last concurrent instance started
 |  lastParam.dat  |  the last initial point being used for local minimization
-|  lastSobol.dat |  the last sobol point for which objective function being evaluated
-| legitSobol.dat |  number of sobol points evaluated with objective values less than maximum legitimate objective value (defined in config.txt)
-|  missingSobol.dat |  Vector of numbers of sobol points that are not evaluated after finishing evaluation of sobol points (may be due to some instances being stopped). These sobol points are re-visited to be evaluated.
+|  lastSobol.dat |  the last Sobol point for which objective function being evaluated
+| legitSobol.dat |  number of Sobol points evaluated with objective values less than maximum legitimate objective value (defined in config.txt)
+|  missingSobol.dat |  Vector of numbers of Sobol points that are not evaluated after finishing evaluation of sobol points (may be due to some instances being stopped). These sobol points are re-visited to be evaluated.
 |  sobol.dat |  the list of sobol points
-|  sobolFnVal.dat  | the value of the objective function at each sobol point
+|  sobolFnVal.dat  | the value of the objective function at each Sobol point
 |  state.dat   |  the current state of the program
 |  x_starts.dat |  sorted values of sobolFnVal, to be used by local minimization routine to converge to global minimum
-|  searchResults.dat |  the minimized objective function and associated parameters. Each line corresponds to one set of parameters and show the following info: the instance number running the code, the number of the sobol point, how many global minima found so far, obecjtive value, and associated parameters.
-|  searchStart.dat |  the starting point in the local minimization for the associated line in searchResults.dat. Each line shows the following information: the instance number running the code, the number of the sobol point, parameter values for the starting point.
-|  FinalResults.dat |  the minimized objective function and associated parameters after running a local minimization around the best global minimum so far one more using BOBYQA. Each line corresponds to one set of parameters and show the following info: the instance number running the code, the number of the sobol point, obecjtive value, and associated parameters.
-|  FinalStart.dat |  the best global minimum so far as the starting point for running a local minimization one more using BOBYQA. Each line corresponds to one set of parameters and show the following info: the instance number running the code, the number of the sobol point,and associated parameters.
+|  searchResults.dat |  the minimized objective function and associated parameters. Each line corresponds to one set of parameters and show the following info: the instance number running the code, the number of the Sobol point, how many global minima found so far, objective value, and associated parameters.
+|  searchStart.dat |  the starting point in the local minimization for the associated line in searchResults.dat. Each line shows the following information: the instance number running the code, the number of the Sobol point, parameter values for the starting point.
+|  FinalResults.dat |  the minimized objective function and associated parameters after running a local minimization around the best global minimum so far one more using BOBYQA. Each line corresponds to one set of parameters and show the following info: the instance number running the code, the number of the Sobol point, objective value, and associated parameters.
+|  FinalStart.dat |  the best global minimum so far as the starting point for running a local minimization one more using BOBYQA. Each line corresponds to one set of parameters and show the following info: the instance number running the code, the number of the Sobol point, and associated parameters.
 
  -----------------------------------
  6. Specifying the objective function
