@@ -843,13 +843,13 @@ contains
                 write(errorString, *) seqNo, " found point: ",i,"greater than max: ",p_qr_ndraw
                 call exitState(errorString)
             END IF
-            if(fval<p_fvalmax .and. solvedPoints(i) == .FALSE.) legitSobol = legitSobol +1
-            if(solvedPoints(i) == .FALSE.) numsobol = numsobol +1
+            if(fval<p_fvalmax .and. (solvedPoints(i) .eqv. .FALSE.)) legitSobol = legitSobol +1
+            if(solvedPoints(i) .eqv. .FALSE.) numsobol = numsobol +1
             solvedPoints(i) = .TRUE.
         END DO
 10      call myclose(fileDesc)
 
-        missing=count(solvedPoints==.FALSE.)
+        missing=count(solvedPoints .eqv. .FALSE.)
 
         IF(missing>0 .and. legitSobol<p_legitimate) THEN
           !Add the sobol points that need to be solved.
@@ -968,7 +968,7 @@ contains
         call myread2(x_starts,'x_starts.dat')
 
         solvedPoints = .FALSE.
-        do while(any(solvedPoints == .FALSE.))
+        do while(any(solvedPoints .eqv. .FALSE.))
 
           call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', IOSTAT=openStat, ACTION='read')
           DO
@@ -983,7 +983,7 @@ contains
           END DO
   10      call myclose(fileDesc)
 
-          nummiss=count(solvedPoints == .FALSE.)
+          nummiss=count(solvedPoints .eqv. .FALSE.)
 
           IF(nummiss==0) EXIT ! No missing local minimizations.
 

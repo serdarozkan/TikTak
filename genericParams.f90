@@ -78,12 +78,12 @@ CONTAINS
               open(UNIT=41, FILE='seqNo.dat', STATUS='replace'); write(41,*) 0 ; close(41)
               IF(OPTION==5) THEN
                 INQUIRE(FILE='searchResults.dat', EXIST=THERE_EXISTS)
-                IF(THERE_EXISTS == .FALSE.) THEN
+                IF(THERE_EXISTS .eqv. .FALSE.) THEN
                   open(UNIT=41, FILE='searchResults.dat', STATUS='replace'); close(41)
                 ENDIF
 
                 INQUIRE(FILE='searchStart.dat', EXIST=THERE_EXISTS)
-                IF(THERE_EXISTS == .FALSE.) THEN
+                IF(THERE_EXISTS .eqv. .FALSE.) THEN
                   open(UNIT=41, FILE='searchStart.dat', STATUS='replace'); close(41)
                 ENDIF
               ENDIF
