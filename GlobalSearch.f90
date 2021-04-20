@@ -69,6 +69,7 @@ PROGRAM GlobalSearch
                                   ! minimizing the objective function
 
     ! temporary variables
+    LOGICAL :: args_missing     ! if program arguments are missing
     LOGICAL :: complete         ! if the number of points to evaluate (either sobol or
                                 ! minimization) has been completed
     CHARACTER(LEN=1000) :: errorString  ! variable used for writing error messages
@@ -89,7 +90,8 @@ PROGRAM GlobalSearch
     LeadTerm=0
     alg = p_default_alg
 
-    call parseCommandLine()
+    call parseCommandLine(args_missing)
+    if (args_missing) STOP
 
     IF (runDiagnostics .eqv. .TRUE.) THEN
       ! We are evaluating the objective value once for given parameter values in the config file.
@@ -1010,9 +1012,11 @@ contains
 7460    format(3i10, 200f40.20)
     END SUBROUTINE findMissingSearch
 
-    SUBROUTINE parseCommandLine()
+    SUBROUTINE parseCommandLine(args_missing)
         !As the name suggests, parse the command line
+        LOGICAL, INTENT(OUT) :: args_missing
 
+        args_missing=.FALSE.
         temp=COMMAND_ARGUMENT_COUNT()
 
         IF (temp == 0) THEN
@@ -1028,6 +1032,7 @@ contains
             print *,"               5 = run local minimization for given parameters"
             print *,"           configfile is mandatory for all but warm start"
             print *,"           a,d,b = local minimization algorithm. Optional, default is (b) bobyqa"
+            args_missing = .TRUE.
             return
         END IF
 
