@@ -232,8 +232,13 @@ CONTAINS
     DO WHILE (count <= fileDIM(1))
         ! read until we run out of lines. Possible that file is really large (by mistake), so
         ! stop if we've reached the maximum number of iterations
-        read(fileDesc,*,end=45) myarray2(count,:)
+        read(fileDesc,*,IOSTAT=openStat,end=45) myarray2(count,:)
+        IF(openStat /= 0) THEN
+          PRINT*,'myread2, read(fileDesc,*,IOSTAT=openStat,end=45)', openStat
+          openStat=0
+       ELSE
         count=count+1
+       ENDIF
     END DO
 45  call myclose(fileDesc)
     If(PRESENT(numrows)) numrows=count-1
@@ -262,7 +267,7 @@ CONTAINS
     END DO
     call myclose(fileDesc)
 
-100 FORMAT(1x,1000(3x,F20.12))
+100 FORMAT(1x,1000(3x,F30.15))
 
   end subroutine  mywrite2
 

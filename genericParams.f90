@@ -116,7 +116,7 @@ CONTAINS
               open(UNIT=41, FILE='FinalStart.dat', STATUS='replace'); close(41)
 
             ELSEIF(OPTION==2) THEN
-              !if updating Sobol points, then don't reset state stuff, lastSobol, previously
+              !if updating Sobol points, then don't reset state, lastSobol, previously
               !calculated function values, or previously used parameters
               isUpdate= .TRUE.
               close(41)
@@ -186,7 +186,7 @@ CONTAINS
                   print*, "old # sobol= ",old_p_qr_ndraw
                   print*, "solved # sobol= ",numsolved
                   print*, "legitimate Sobol #= ",legitSobol
-                  IF (numsolved > p_qr_ndraw .or. legitSobol > p_legitimate) THEN
+                  IF (numsolved >= p_qr_ndraw .or. legitSobol >= p_legitimate) THEN
                     write(errorString,*) "Update sobol: numsolved > p_qr_ndraw or legitSobol > p_legitimate ", &
                     NEW_LINE('A'), old_p_qr_ndraw, p_qr_ndraw, legitSobol , p_legitimate, NEW_LINE('A'), &
                     " Change p_qr_ndraw to ", max(numsolved+1,p_qr_ndraw)," or p_legitimate to ", max(legitSobol+1,p_legitimate)
@@ -259,7 +259,6 @@ CONTAINS
             call parseConfig(.FALSE., 'internalConfig.dat')
         END IF
         seqNo = getNextNumber('seqNo.dat')
-
     END SUBROUTINE initialize
 
     SUBROUTINE parseConfig(isUpdate, configFile)
@@ -372,7 +371,7 @@ CONTAINS
 
         ! now parse the range for the sobol points
         parsedLine = .FALSE.
-        DO WHILE ( (parsedLine .eqv. .FALSE.) .AND. (.not. isUpdate) )
+        DO WHILE ( (parsedLine .eqv. .FALSE.))
             read(fileDesc,'(A100)',END=11) line
 
             IF (line(1:1)=='!') THEN
@@ -381,16 +380,22 @@ CONTAINS
 
             parsedLine = .TRUE.
 
-            read(line,*) p_range(1,1), p_range(1,2)
+            ! We are not allowed to change the parameter ranges except for warm start
+            IF(.not. isUpdate) read(line,*) p_range(1,1), p_range(1,2)
 
             DO i=2,p_nx
+                IF(.not. isUpdate) THEN
                 read(fileDesc,*,END=11) p_range(i,1), p_range(i,2)
+                ELSE
+                  read(fileDesc,'(A100)',END=11) line
+                ENDIF
             END DO
         END DO
 
         ! now parse the initial guess for the parameters
+        ! initial guess can be updated during cold starts phase.
         parsedLine = .FALSE.
-        DO WHILE ( (parsedLine .eqv. .FALSE.) .AND. (.not. isUpdate) )
+        DO WHILE ( (parsedLine .eqv. .FALSE.))
             read(fileDesc,'(A100)',END=12) line
 
             IF (line(1:1)=='!') THEN
@@ -398,7 +403,7 @@ CONTAINS
             END IF
 
             parsedLine = .TRUE.
-
+            ! We will always change the initial parameter values
             read(line,*) p_init(1)
 
             DO i=2,p_nx
@@ -408,7 +413,7 @@ CONTAINS
 
         ! now parse the bounds for the parameters
         parsedLine = .FALSE.
-        DO WHILE ( (parsedLine .eqv. .FALSE.) .AND. (.not. isUpdate) )
+        DO WHILE ( (parsedLine .eqv. .FALSE.))
             read(fileDesc,'(A100)',END=13) line
 
             IF (line(1:1)=='!') THEN
@@ -416,10 +421,14 @@ CONTAINS
             END IF
 
             parsedLine = .TRUE.
-            read(line,*) p_bound(1,1), p_bound(1,2)
+            IF(.not. isUpdate)  read(line,*) p_bound(1,1), p_bound(1,2)
 
             DO i=2,p_nx
+              IF(.not. isUpdate) THEN
                 read(fileDesc,*,END=13) p_bound(i,1), p_bound(i,2)
+              ELSE
+                read(fileDesc,'(A100)',END=11) line
+              ENDIF
             END DO
         END DO
 

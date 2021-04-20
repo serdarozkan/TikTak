@@ -1,10 +1,10 @@
 PROGRAM GlobalSearch
 
     ! The main program for the TikTak global optimization algorithm. This algorithm
-    !	evolved out of Fatih Guvenen's joint projects with Tony Smith, Serdar Ozkan, 
-    ! Fatih Karahan, Tatjana Kleineberg, and Antoine Arnaud. This version of the 
-    ! code was written by Arun Kandanchatha and Serdar Ozkan. 
-    ! 
+    !	evolved out of Fatih Guvenen's joint projects with Tony Smith, Serdar Ozkan,
+    ! Fatih Karahan, Tatjana Kleineberg, and Antoine Arnaud. This version of the
+    ! code was written by Arun Kandanchatha and Serdar Ozkan.
+    !
     ! The code is written as a pseudo state machine, and
     ! multiple instances can be run at once. The main driver (which is
     ! the initially the cold start) will set states for all other
@@ -94,7 +94,7 @@ PROGRAM GlobalSearch
     IF (runDiagnostics .eqv. .TRUE.) THEN
       ! We are evaluating the objective value once for given parameter values in the config file.
       ! We run the simulation with diagnostic=1 so that it can produce moments other than the targets.
-      diagnostic=1
+      diagnostic = 1
       print*,"Running diagnostics for the initial guess:"
       call initialize(option,seqNo,config)
       call obj_initialize
@@ -152,7 +152,7 @@ PROGRAM GlobalSearch
       stop
     ENDIF
 
-    IF ((isWarm .eqv. .FALSE.)) THEN
+    IF ((isWarm .eqv. .FALSE.) .or. (updateSobolPoints .eqv. .TRUE.)) THEN
         ! If this instance is true cold start or the one that updates sobol points,
         ! then it is the leader/initial
         LeadTerm=1
@@ -352,9 +352,19 @@ contains
               write(errorString, 7001) "Sequence# ", seqNo," is solving sobol point ",whichPoint
               call writeToLog(errorString)
               fval=objFun(sobol_trial(whichPoint,:))
-              if(fval<p_fvalmax) legitSobol = getNextNumber('legitSobol.dat')
-              if(mod(legitSobol,10)==1) print*, "legitSobol=", legitSobol
-              call myopen(unit=fileDesc, file='sobolFnVal.dat', STATUS='old', IOSTAT=openStat, ACTION='write', position='append')
+              if(fval<p_fvalmax) then
+                legitSobol = getNextNumber('legitSobol.dat')
+              ELSE
+                legitSobol = getNumber('legitSobol.dat')
+                IF(legitSobol==p_legitimate) legitSobol = p_legitimate + 1
+              ENDIF
+              if(mod(legitSobol,10)==1) THEN
+                write(errorString, 7002) "Sequence# ", seqNo," has found ", &
+                legitSobol , "legitimate sobol points"
+                call writeToLog(errorString)
+              ENDIF
+              call myopen(unit=fileDesc, file='sobolFnVal.dat', STATUS='old', &
+              IOSTAT=openStat, ACTION='write', position='append')
               write(fileDesc,7000) whichPoint, fval, sobol_trial(whichPoint,:)
               call myclose(fileDesc)
           END IF
@@ -371,8 +381,10 @@ contains
         END DO
         complete = .TRUE.
 
-7000    format(i8, 200f40.20)
+7000   format(i8, 200f40.20)
 7001   format(A11,i5,A25,i6)
+7002   format(A11,i5,A25,i6,A25)
+
     END SUBROUTINE solveAtSobolPoints
 
     SUBROUTINE LocalMinimizations(seqNo, algor, complete)
@@ -541,7 +553,7 @@ contains
         !so far. It always uses the same algorithm, bobyqa.
         implicit none
         INTEGER(I4B), INTENT(IN) :: seqNo
-        INTEGER(I4B) :: i, openStat,whichPoint
+        INTEGER(I4B) :: i, openStat,whichPoint,nwrite=1
         REAL(DP) :: evalParam(p_nx),temp(p_nx+4)
         REAL(DP) :: rhobeg, rhoend, fn_val
 
@@ -558,14 +570,17 @@ contains
         call writeToLog(errorString); print*,trim(errorString)
         write(errorString, 7452) "The best final point is ", temp
         call writeToLog(errorString); print*,trim(errorString)
-        write(errorString, 7453) "Instance# ", seqno, " is executing the final search at with max times: ",p_maxeval
+        ! write(errorString, 7453) "Instance# ", seqno, " is executing the final search at with max times: ",p_maxeval
+        write(errorString, 7453) "Instance# ", seqno, " is executing the final search at with max times: ",itmax_DFPMIN
         call writeToLog(errorString);  print*,trim(errorString)
 
-        rhobeg  = minval(p_bound(:,2)-p_bound(:,1))/10.0_DP
-        rhoend  = 1.0D-3/4.0_dp
-        call bobyqa_h(p_nx,p_ninterppt,evalParam,p_bound(:,1),p_bound(:,2),rhobeg,rhoend,p_iprint,p_maxeval,p_wspace,p_nmom)
+        CALL EST_dfpmin(evalParam,fn_val,objFun,nwrite,itmax_DFPMIN,gtol_DFPMIN)
 
-        fn_val = objFun(evalParam)
+        ! rhobeg  = minval(p_bound(:,2)-p_bound(:,1))/10.0_DP
+        ! rhoend  = 1.0D-3/4.0_dp
+        ! call bobyqa_h(p_nx,p_ninterppt,evalParam,p_bound(:,1),p_bound(:,2),rhobeg,rhoend,p_iprint,p_maxeval,p_wspace,p_nmom)
+
+        ! fn_val = objFun(evalParam)
 
         call myopen(UNIT=fileDesc, FILE='FinalResults.dat', STATUS='unknown', IOSTAT=openStat, ACTION='write',position='append')
         write(fileDesc,7451) seqNo, whichPoint, fn_val, evalParam
@@ -808,6 +823,8 @@ contains
         CHARACTER(LEN=1000) :: errorString
         REAL(DP) :: fval,missingSobol(p_qr_ndraw,1)
 
+
+        open(UNIT=41, FILE='legitSobolMiss.dat', STATUS='replace');  write(41,*) 0 ; close(41)
         complete_status=0
 
         !we aren't actually guaranteed that all points are complete. Just that we have tried everything. So
@@ -842,7 +859,7 @@ contains
             write(fileDesc,271) i
           END DO
           call myclose(fileDesc)
-          call setState(legitSobol,'legitSobol.dat')
+          call setState(legitSobol,'legitSobolMiss.dat')
           if(p_legitimate < p_qr_ndraw) THEN
             call myread2(missingSobol,'missingSobol.dat',numrows)
             nummiss=min(numrows,INT(4.0_DP*numsobol/legitSobol)*(p_legitimate-legitSobol))
@@ -891,7 +908,7 @@ contains
           END IF
         ENDIF
 
-        legitSobol=getNumber('legitSobol.dat')
+        legitSobol=getNumber('legitSobolMiss.dat')
 
         DO
           call myread2(missingSobol,'missingSobol.dat',missing)
@@ -906,7 +923,14 @@ contains
             write(errorString, *) seqNo," solving missing sobol point ",INT(missingSobol(1,1))
             call writeToLog(errorString); print*, trim(errorString);
             fval=objFun(sobol_trial(INT(missingSobol(1,1)),:))
-            if(fval<p_fvalmax) legitSobol=getNextNumber('legitSobol.dat')
+
+            IF(fval<p_fvalmax) THEN
+              legitSobol = getNextNumber('legitSobolMiss.dat')
+            ELSE
+              legitSobol = getNumber('legitSobolMiss.dat')
+              IF(legitSobol==p_legitimate) legitSobol = p_legitimate + 1
+            ENDIF
+
             call myopen(unit=fileDesc, file='sobolFnVal.dat', STATUS='old', IOSTAT=openStat, ACTION='write', position='append')
             write(fileDesc,7000) INT(missingSobol(1,1)), fval, sobol_trial(INT(missingSobol(1,1)),:)
             call myclose(fileDesc)
@@ -1001,7 +1025,7 @@ contains
             print *,"               2 = update number of Sobol points"
             print *,"               3 = update number of local minimizationss"
             print *,"               4 = run diagnostics for given parameters"
-            print *,"               5 = run diagnostics for given parameters"
+            print *,"               5 = run local minimization for given parameters"
             print *,"           configfile is mandatory for all but warm start"
             print *,"           a,d,b = local minimization algorithm. Optional, default is (b) bobyqa"
             return
