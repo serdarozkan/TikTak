@@ -69,6 +69,7 @@ PROGRAM GlobalSearch
                                   ! minimizing the objective function
 
     ! temporary variables
+    LOGICAL :: args_missing     ! if program arguments are missing
     LOGICAL :: complete         ! if the number of points to evaluate (either sobol or
                                 ! minimization) has been completed
     CHARACTER(LEN=1000) :: errorString  ! variable used for writing error messages
@@ -89,7 +90,8 @@ PROGRAM GlobalSearch
     LeadTerm=0
     alg = p_default_alg
 
-    call parseCommandLine()
+    call parseCommandLine(args_missing)
+    if (args_missing) STOP
 
     IF (runDiagnostics .eqv. .TRUE.) THEN
       ! We are evaluating the objective value once for given parameter values in the config file.
@@ -841,13 +843,13 @@ contains
                 write(errorString, *) seqNo, " found point: ",i,"greater than max: ",p_qr_ndraw
                 call exitState(errorString)
             END IF
-            if(fval<p_fvalmax .and. solvedPoints(i) == .FALSE.) legitSobol = legitSobol +1
-            if(solvedPoints(i) == .FALSE.) numsobol = numsobol +1
+            if(fval<p_fvalmax .and. (solvedPoints(i) .eqv. .FALSE.)) legitSobol = legitSobol +1
+            if(solvedPoints(i) .eqv. .FALSE.) numsobol = numsobol +1
             solvedPoints(i) = .TRUE.
         END DO
 10      call myclose(fileDesc)
 
-        missing=count(solvedPoints==.FALSE.)
+        missing=count(solvedPoints .eqv. .FALSE.)
 
         IF(missing>0 .and. legitSobol<p_legitimate) THEN
           !Add the sobol points that need to be solved.
@@ -966,7 +968,7 @@ contains
         call myread2(x_starts,'x_starts.dat')
 
         solvedPoints = .FALSE.
-        do while(any(solvedPoints == .FALSE.))
+        do while(any(solvedPoints .eqv. .FALSE.))
 
           call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', IOSTAT=openStat, ACTION='read')
           DO
@@ -981,7 +983,7 @@ contains
           END DO
   10      call myclose(fileDesc)
 
-          nummiss=count(solvedPoints == .FALSE.)
+          nummiss=count(solvedPoints .eqv. .FALSE.)
 
           IF(nummiss==0) EXIT ! No missing local minimizations.
 
@@ -1010,9 +1012,11 @@ contains
 7460    format(3i10, 200f40.20)
     END SUBROUTINE findMissingSearch
 
-    SUBROUTINE parseCommandLine()
+    SUBROUTINE parseCommandLine(args_missing)
         !As the name suggests, parse the command line
+        LOGICAL, INTENT(OUT) :: args_missing
 
+        args_missing=.FALSE.
         temp=COMMAND_ARGUMENT_COUNT()
 
         IF (temp == 0) THEN
@@ -1028,6 +1032,7 @@ contains
             print *,"               5 = run local minimization for given parameters"
             print *,"           configfile is mandatory for all but warm start"
             print *,"           a,d,b = local minimization algorithm. Optional, default is (b) bobyqa"
+            args_missing = .TRUE.
             return
         END IF
 
