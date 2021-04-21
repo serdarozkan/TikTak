@@ -841,7 +841,11 @@ contains
             IF (i > p_qr_ndraw) THEN
                 !This shouldn't happen. let's note the error and stop.
                 write(errorString, *) seqNo, " found point: ",i,"greater than max: ",p_qr_ndraw
-                call exitState(errorString)
+                call writeToLog(trim(errorString))
+                write(errorString, *) seqNo, "ERROR: This shouldn't happen. Check sobolFnVal.dat."
+                call writeToLog(trim(errorString))
+                cycle
+!                call exitState(errorString)
             END IF
             if(fval<p_fvalmax .and. (solvedPoints(i) .eqv. .FALSE.)) legitSobol = legitSobol +1
             if(solvedPoints(i) .eqv. .FALSE.) numsobol = numsobol +1
