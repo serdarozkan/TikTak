@@ -113,7 +113,7 @@ You can choose one of the following algorithms for local minimization. Default i
 
 | Source File | Description |
 | ------ | ------ |
-|  GlobalSearch.f90 |  the main driver program for the search.
+|  TiktakGlobalSearch.f90 |  the main driver program for the search.
 |  genericParams.f90 |  the parameters that the generic search program needs. Note that we do not put function specific parameters in this file
 |  minimize.f90  |  this module contains the code for minimization.
 |  nrtype.f90  |  basic types used in all functions.
