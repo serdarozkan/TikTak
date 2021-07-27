@@ -1,14 +1,45 @@
-PROGRAM GlobalSearch
+PROGRAM TiktakGlobalSearch
 
-    ! The main program for the TikTak global optimization algorithm. This algorithm
-    !	evolved out of Fatih Guvenen's joint projects with Tony Smith, Serdar Ozkan,
-    ! Fatih Karahan, Tatjana Kleineberg, and Antoine Arnaud. This version of the
-    ! code was written by Arun Kandanchatha and Serdar Ozkan.
-    !
-    ! The code is written as a pseudo state machine, and
-    ! multiple instances can be run at once. The main driver (which is
-    ! the initially the cold start) will set states for all other
-    ! instances of the program.
+  ! The main program for the TikTak Global Optimizer. These programs are modifications
+	! of the original algorithm described in Guvenen (2011) and implemented in
+	! increasingly more general forms in Guvenen and Smith (2014), Guvenen, Ozkan, and Song (214),
+	! and Guvenen, Karahan, Ozkan, and Song (2015). A description of the basic version of the TikTak
+	! algorithm can be found in Arnoud, Guvenen, and Kleineberg (2019).
+	!
+	! This version of the TikTak code contains two important improvements over previous versions:
+	!
+	! (i) It contains the most efficient implementation of TikTak to date (including relative to
+	! the version benchmarked in Arnoud, Guvenen, and Kleineberg (2019));
+	! (ii) It can be run in parallel mode out of the box without requiring any specialized software
+	! (MPI, OpenMP, etc.). It can be run both on computer clusters and on fully distributed mixed
+	! computational environments (e.g., PCs running Windows, Linux, or OSX in different locations)
+	! using a syncing solution like DropBox.
+	!
+	!
+	! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+	! BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+	! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+	! DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	! OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+	!References:
+	! Guvenen, Fatih (2011): "Macroeconomics with Heterogeneity: A Practical Guide", FRB Richmond
+	! Economic Quarterly, Volume 97, Number 3, pp. 255�326.
+	! Guvenen, Fatih and Anthony Smith (2014): �Inferring Labor Income Risk and Partial Insurance
+	! from Economic Choices,� Econometrica, November 2014, 82 (6), 2085�2129.
+	! Guvenen, Fatih, Serdar Ozkan, and Jae Song, �The Nature of Countercyclical Income Risk,� Journal of
+	! Political Economy, 2014, 122 (3), 621�660.
+	! Arnoud, Antoine, Fatih Guvenen, Tatjana Kleineberg (2019): "Benchmarking Global Optimizers",
+	! NBER Working Paper, 26340.
+	! Guvenen, Fatih, Fatih Karahan, Serdar Ozkan, and Jae Song (2021): �What Do Data on Millions of
+	! U.S. Workers Reveal About Lifecycle Earnings Dynamics?,� Econometrica, forthcoming.
+  ! Fatih Karahan, Serdar Ozkan, and Jae Song (2021): Anatomy of Lifetime Earnings Inequality:
+  ! Heterogeneity in Job Ladder Risk vs Human Capital
+  ! Elin  Halvorsen, Joachim Hubmer, Serdar Ozkan, Sergio Salgado: Why Are the Wealthiest So Wealthy?
+  ! An Empirical-Quantitative Investigation of Life-Cycle Wealth Dynamics
+
+	! ==============================================================
+
     !
     ! The states are as follows:
     !     -1: exit state - informs all processes to terminate
@@ -107,15 +138,14 @@ PROGRAM GlobalSearch
     ENDIF
 
     IF (runLocalMin .eqv. .TRUE.) THEN
-      ! We are evaluating the objective value once for given parameter values in the config file.
-      ! We run the simulation with diagnostic=1 so that it can produce moments other than the targets.
       print*,"Running local minimization around the initial guess:"
       call initialize(option,seqNo,config)
       call obj_initialize
       write(*,'(A9,/,200(f12.6,/))') "p_init = ",(p_init(i), i=1,p_nx)
 
       !save the initial point
-      call myopen(UNIT=fileDesc, FILE='searchStart.dat', STATUS='unknown', IOSTAT=iostat, ACTION='write',position='append')
+      call myopen(UNIT=fileDesc, FILE='searchStart.dat', STATUS='unknown', IOSTAT=iostat, &
+       ACTION='write',SHARE='DENYRW',position='append')
       write(fileDesc,'(2i10, 200f40.20)') -1, -1, p_init
       call myclose(fileDesc)
 
@@ -147,7 +177,8 @@ PROGRAM GlobalSearch
       write(*,'(A18,200(f12.6,/))') "Objective value = ",fval
 
       !save the results
-      call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', IOSTAT=iostat, ACTION='write',position='append')
+      call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', IOSTAT=iostat, &
+       ACTION='write',SHARE='DENYRW',position='append')
       write(fileDesc,'(3i10, 200f40.20)') -1, -1, -1, fval, p_init
       call myclose(fileDesc)
 
@@ -366,7 +397,7 @@ contains
                 call writeToLog(errorString)
               ENDIF
               call myopen(unit=fileDesc, file='sobolFnVal.dat', STATUS='old', &
-              IOSTAT=openStat, ACTION='write', position='append')
+              IOSTAT=openStat, ACTION='write',SHARE='DENYRW', position='append')
               write(fileDesc,7000) whichPoint, fval, sobol_trial(whichPoint,:)
               call myclose(fileDesc)
           END IF
@@ -415,12 +446,12 @@ contains
         IF (whichPoint == 1) THEN
             i=0
             call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', IOSTAT=ioStat,&
-                ACTION='write',position='append')
+                ACTION='write',SHARE='DENYRW',position='append')
             write(fileDesc,74521) seqNo, i,i, x_starts(1,:)
             call myclose(fileDesc)
 
             call myopen(UNIT=fileDesc, FILE='searchStart.dat', STATUS='unknown', IOSTAT=ioStat, &
-                ACTION='write',position='append')
+                ACTION='write',SHARE='DENYRW',position='append')
             write(fileDesc,7452) seqNo, i, x_starts(1,2:)
             call myclose(fileDesc)
         END IF
@@ -471,7 +502,8 @@ contains
         REAL(DP), DIMENSION(p_nx+4) :: currentBest
 
         !save the initial point
-        call myopen(UNIT=fileDesc, FILE='searchStart.dat', STATUS='unknown', IOSTAT=openStat, ACTION='write',position='append')
+        call myopen(UNIT=fileDesc, FILE='searchStart.dat', STATUS='unknown', &
+        IOSTAT=openStat, ACTION='write',SHARE='DENYRW',position='append')
         write(fileDesc,7453) seqNo, whichPoint, evalParam
         call myclose(fileDesc)
 
@@ -507,7 +539,8 @@ contains
         END IF
 
         !save the results
-        call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', IOSTAT=openStat, ACTION='write',position='append')
+        call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', &
+         IOSTAT=openStat, ACTION='write',SHARE='DENYRW',position='append')
         write(fileDesc,74531) seqNo, whichPoint, i, fn_val, evalParam
         call myclose(fileDesc)
 
@@ -564,7 +597,8 @@ contains
         fn_val=temp(4)
 
         i=-1
-        call myopen(UNIT=fileDesc, FILE='FinalStart.dat', STATUS='unknown', IOSTAT=openStat, ACTION='write',position='append')
+        call myopen(UNIT=fileDesc, FILE='FinalStart.dat', STATUS='unknown', &
+        IOSTAT=openStat, ACTION='write',SHARE='DENYRW',position='append')
         write(fileDesc,7451) seqNo, whichPoint, evalParam
         call myclose(fileDesc)
 
@@ -584,7 +618,8 @@ contains
 
         ! fn_val = objFun(evalParam)
 
-        call myopen(UNIT=fileDesc, FILE='FinalResults.dat', STATUS='unknown', IOSTAT=openStat, ACTION='write',position='append')
+        call myopen(UNIT=fileDesc, FILE='FinalResults.dat', STATUS='unknown', &
+         IOSTAT=openStat, ACTION='write',SHARE='DENYRW',position='append')
         write(fileDesc,7451) seqNo, whichPoint, fn_val, evalParam
         call myclose(fileDesc)
 
@@ -825,8 +860,7 @@ contains
         CHARACTER(LEN=1000) :: errorString
         REAL(DP) :: fval,missingSobol(p_qr_ndraw,1)
 
-
-        open(UNIT=41, FILE='legitSobolMiss.dat', STATUS='replace');  write(41,*) 0 ; close(41)
+        call setState(0,'legitSobolMiss.dat')
         complete_status=0
 
         !we aren't actually guaranteed that all points are complete. Just that we have tried everything. So
@@ -835,7 +869,8 @@ contains
         legitSobol = 0
         numsobol = 0
 
-        call myopen(UNIT=fileDesc, FILE='sobolFnVal.dat', STATUS='unknown', IOSTAT=openStat, ACTION='read')
+        call myopen(UNIT=fileDesc, FILE='sobolFnVal.dat', STATUS='unknown', &
+        IOSTAT=openStat, ACTION='read',SHARE='DENYRW')
         DO
             read(fileDesc,270, END=10) i, fval
             IF (i > p_qr_ndraw) THEN
@@ -857,7 +892,8 @@ contains
 
         IF(missing>0 .and. legitSobol<p_legitimate) THEN
           !Add the sobol points that need to be solved.
-          call myopen(unit=fileDesc, file='missingSobol.dat', STATUS='replace', IOSTAT=openStat, ACTION='write')
+          call myopen(unit=fileDesc, file='missingSobol.dat', STATUS='replace', &
+          IOSTAT=openStat, ACTION='write',SHARE='DENYRW')
           DO i=1,p_qr_ndraw
             IF(solvedPoints(i)) THEN
                 cycle
@@ -876,7 +912,8 @@ contains
           endif
           complete_status=1
         ELSE
-          call myopen(unit=fileDesc, file='missingSobol.dat', STATUS='replace', IOSTAT=openStat, ACTION='write')
+          call myopen(unit=fileDesc, file='missingSobol.dat', STATUS='replace', &
+           IOSTAT=openStat, ACTION='write',SHARE='DENYRW')
           call myclose(fileDesc)
           complete_status=2
         ENDIF
@@ -923,7 +960,8 @@ contains
             if(missing>1) THEN
               call mywrite2(missingSobol(2:missing,:),'missingSobol.dat')
             ELSE
-              call myopen(unit=fileDesc, file='missingSobol.dat', STATUS='replace', IOSTAT=openStat, ACTION='write')
+              call myopen(unit=fileDesc, file='missingSobol.dat', STATUS='replace', &
+               IOSTAT=openStat, ACTION='write',SHARE='DENYRW')
               call myclose(fileDesc)
             ENDIF
             write(errorString, *) seqNo," solving missing sobol point ",INT(missingSobol(1,1))
@@ -937,7 +975,8 @@ contains
               IF(legitSobol==p_legitimate) legitSobol = p_legitimate + 1
             ENDIF
 
-            call myopen(unit=fileDesc, file='sobolFnVal.dat', STATUS='old', IOSTAT=openStat, ACTION='write', position='append')
+            call myopen(unit=fileDesc, file='sobolFnVal.dat', STATUS='old', &
+            IOSTAT=openStat, ACTION='write',SHARE='DENYRW', position='append')
             write(fileDesc,7000) INT(missingSobol(1,1)), fval, sobol_trial(INT(missingSobol(1,1)),:)
             call myclose(fileDesc)
             if(missing==1 .or. legitSobol==p_legitimate) THEN
@@ -974,7 +1013,8 @@ contains
         solvedPoints = .FALSE.
         do while(any(solvedPoints .eqv. .FALSE.))
 
-          call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', IOSTAT=openStat, ACTION='read')
+          call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', &
+          IOSTAT=openStat, ACTION='read',SHARE='DENYRW')
           DO
             READ (fileDesc,7460, END=10) seqn, lastP
             IF (lastP > p_maxpoints) THEN
@@ -1025,7 +1065,7 @@ contains
 
         IF (temp == 0) THEN
             print *,"Invoke with:"
-            print *,"               ./genericSearch <-1|0|1|2|3|4> <configfile> <(a)moeba | (d)fpmin | (b)obyqa>"
+            print *,"               ./TiktakGlobalSearch <-1|0|1|2|3|4> <configfile> <(a)moeba | (d)fpmin | (b)obyqa>"
             print *,"where"
             print *,"              -1 = stop all instances"
             print *,"               0 = cold start"
@@ -1114,4 +1154,4 @@ contains
         END IF
     END SUBROUTINE parseCommandLine
 
-END PROGRAM GlobalSearch
+END PROGRAM TiktakGlobalSearch

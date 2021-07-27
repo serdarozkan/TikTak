@@ -9,13 +9,13 @@ MODULE stateControl
     INTEGER(I4B), parameter :: p_exitState=-1
 CONTAINS
 
-    SUBROUTINE myopen(unit, file, status, iostat, action, position)
+    SUBROUTINE myopen(unit, file, status, iostat, action, SHARE,position)
       !open a file. Locks files if they are opened for any purpose other
       !than reading. Locked files cannot be read/written until the
       !lock is removed.
 
       INTEGER(I4B), INTENT(OUT) :: unit
-      CHARACTER(LEN=*), INTENT(IN) :: file, status, action
+      CHARACTER(LEN=*), INTENT(IN) :: file, status, action,SHARE
       CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: position
       INTEGER(I4B), INTENT(OUT) :: iostat
       CHARACTER(LEN=200) :: msg
@@ -26,13 +26,15 @@ CONTAINS
       fileUnit = 200+mod(fileUnit+2,100)
       unit = fileUnit
 
-      waitMax = 30
+      waitMax = 1000
       iostat=1
       DO WHILE(iostat > 0)
         IF (present(position)) THEN
-            open(UNIT=unit,FILE=file,STATUS=status,IOSTAT=iostat,ACTION=action,POSITION=position,err=111)
+            open(UNIT=unit,FILE=file,STATUS=status,IOSTAT=iostat, &
+            ACTION=action,SHARE = SHARE,POSITION=position, err=111)
         ELSE
-            open(UNIT=unit,FILE=file,STATUS=status,IOSTAT=iostat,ACTION=action,err=111)
+            open(UNIT=unit,FILE=file,STATUS=status,IOSTAT=iostat, &
+            ACTION=action,SHARE = SHARE,err=111)
         END IF
         EXIT
 111     waitMax = waitMax - 1
@@ -79,44 +81,45 @@ CONTAINS
     END SUBROUTINE myclose
 
     FUNCTION getNextNumber(file) RESULT (y)
-      ! This function returns a the next number specified in the file. If file exists,
-      ! just increments from previous, if not it is set to 1.
+      ! This function returns a the next number specified in the file.
       CHARACTER(LEN=*), INTENT(IN) :: file
-      INTEGER(I4B) :: openStat, y,fileDesc,ios,waitMax
+      INTEGER(I4B) :: openStat, y,fileDesc,ios,wait
 
-      waitMax = 30
-      ios=1
+      wait = 0; ios=1
       DO WHILE(ios.NE.0)
-         call myopen(UNIT=fileDesc, FILE=file, STATUS='unknown', IOSTAT=openstat, ACTION='read')
+         call myopen(UNIT=fileDesc, FILE=file, STATUS='unknown', IOSTAT=openstat, &
+          ACTION='read',SHARE='DENYRW')
          READ(fileDesc,*,IOSTAT=ios) y
          call myclose(fileDesc)
-         IF(ios.NE.0) PRINT*,'getNextNumber, read: ',file,' ios= ', ios
+         wait = wait + 1
+         IF(ios.NE.0 .AND. mod(wait,10)==0) PRINT*,'getNextNumber, read: ',file,' ios= ', ios
       ENDDO
       y = y+1
-
-      ios=1
+      wait = 0; ios=1;
       DO WHILE(ios.NE.0)
-        call myopen(UNIT=fileDesc, FILE=file, STATUS='replace', IOSTAT = openStat, ACTION='write')
+        call myopen(UNIT=fileDesc, FILE=file, STATUS='replace', IOSTAT = openStat, &
+         ACTION='write',SHARE='DENYRW')
         write(fileDesc, *,IOSTAT=ios) y
         call myclose(fileDesc)
-        IF(ios.NE.0) PRINT*,'getNextNumber, write: ',file,' ios= ', ios
+        wait = wait + 1
+        IF(ios.NE.0 .AND. mod(wait,10)==0) PRINT*,'getNextNumber, write: ',file,' ios= ', ios
       ENDDO
       return
     END FUNCTION getNextNumber
 
     FUNCTION getNumber(file) RESULT (y)
-      ! This function returns a the next number specified in the file. If file exists,
-      ! just increments from previous, if not it is set to 1.
+      ! This function returns the number specified in the file.
       CHARACTER(LEN=*), INTENT(IN) :: file
-      INTEGER(I4B) :: openStat, y,fileDesc,ios,waitMax
+      INTEGER(I4B) :: openStat, y,fileDesc,ios,wait
 
-      waitMax = 30
-      ios=1
+      wait = 0; ios=1;
       DO WHILE(ios.NE.0)
-         call myopen(UNIT=fileDesc, FILE=file, STATUS='unknown', IOSTAT=openstat, ACTION='read')
+         call myopen(UNIT=fileDesc, FILE=file, STATUS='unknown', IOSTAT=openstat, &
+         ACTION='read',SHARE='DENYRW')
          READ(fileDesc,*,IOSTAT=ios) y
          call myclose(fileDesc)
-         IF(ios.NE.0) PRINT*,'getNumber, read: ',file,' ios= ', ios
+         wait = wait + 1
+         IF(ios.NE.0 .AND. mod(wait,10)==0) PRINT*,'getNumber, read: ',file,' ios= ', ios
       ENDDO
       return
     END FUNCTION getNumber
@@ -125,12 +128,13 @@ CONTAINS
       !Sets the the value s to the specified file.
       INTEGER(I4B), INTENT(IN) :: s
       CHARACTER(LEN=*), INTENT(IN) :: file
-      INTEGER(I4B) :: openStat,fileDesc,ios
+      INTEGER(I4B) :: openStat,fileDesc,ios,wait
       CHARACTER(LEN=1000) :: errorString
 
-      ios=1
+      wait = 0; ios=1;
       DO WHILE(ios.NE.0)
-        call myopen(UNIT=fileDesc, FILE=file, STATUS='replace', IOSTAT=openStat, ACTION='write')
+        call myopen(UNIT=fileDesc, FILE=file, STATUS='replace', IOSTAT=openStat, &
+         ACTION='write',SHARE='DENYRW')
         IF (openStat /= 0) THEN
             ! file doesn't exist. This is an error
             write(errorString,*) "Error: unable to open the file ", file, " Cannot set state to ", s
@@ -138,17 +142,19 @@ CONTAINS
         ENDIF
         write(fileDesc, *,IOSTAT=ios) s
         call myclose(fileDesc)
-        IF(ios.NE.0) PRINT*,'setState: ',file,' s= ',s,' ios= ', ios
+        wait = wait + 1
+        IF(ios.NE.0 .AND. mod(wait,10)==0) PRINT*,'setState: ',file,' s= ',s,' ios= ', ios
       ENDDO
     END SUBROUTINE setState
 
     FUNCTION getState() RESULT (y)
         !returns the current state value
-        INTEGER(I4B) :: y, openStat,fileDesc,ios
+        INTEGER(I4B) :: y, openStat,fileDesc,ios,wait
 
-        ios=1
+        wait = 0; ios=1;
         DO WHILE(ios.NE.0)
-          call myopen(UNIT=fileDesc, FILE='state.dat', STATUS='old', IOSTAT=openStat, ACTION='read')
+          call myopen(UNIT=fileDesc, FILE='state.dat', STATUS='old', IOSTAT=openStat, &
+           ACTION='read',SHARE='DENYRW')
           IF (openStat /= 0) THEN
               ! file doesn't exist. This is an error
               print *,"<stateControl.getState()> Error: unable to open state file."
@@ -156,7 +162,8 @@ CONTAINS
           END IF
           read(fileDesc,*,IOSTAT=ios) y
           call myclose(fileDesc)
-          IF(ios.NE.0) PRINT*,'getState:, ios= ', ios
+          wait = wait + 1
+          IF(ios.NE.0 .AND. mod(wait,10)==0) PRINT*,'getState:, ios= ', ios
         ENDDO
     END FUNCTION getState
 
@@ -180,13 +187,16 @@ CONTAINS
     SUBROUTINE writeToLog(str)
         !writes a string to the log file
         CHARACTER(LEN=*), INTENT(IN) :: str
-        INTEGER(I4B) ::  iostat,fileDesc,ios
-        ios=1
+        INTEGER(I4B) ::  iostat,fileDesc,ios,wait
+
+        wait = 0; ios=1;
         DO WHILE(ios.NE.0)
-          call myopen(unit=fileDesc, file='logFile.txt',status='unknown',IOSTAT=iostat, ACTION='write',position="append")
+          call myopen(unit=fileDesc, file='logFile.txt',status='unknown',IOSTAT=iostat, &
+           ACTION='write',SHARE='DENYRW',position="append")
           write(fileDesc,*,IOSTAT=ios) trim(str)
           call myclose(fileDesc)
-          IF(ios.NE.0) PRINT*,'writeToLog: ', trim(str)
+          wait = wait + 1
+          IF(ios.NE.0 .AND. mod(wait,10)==0)  PRINT*,'writeToLog: ', trim(str)
         ENDDO
     END SUBROUTINE writeToLog
 
@@ -213,12 +223,13 @@ CONTAINS
     CHARACTER(LEN =*), INTENT(IN) :: filename2
     INTEGER, INTENT(OUT), OPTIONAL ::  numrows
     !local
-    INTEGER :: count,openStat,fileDesc
+    INTEGER :: count,openStat,fileDesc,wait
     INTEGER, DIMENSION(2) :: fileDIM
     CHARACTER(LEN =1000) :: errorString
 
     fileDIM = SHAPE(myarray2)
-    call myopen(UNIT=fileDesc, FILE=filename2, STATUS='old', IOSTAT=openStat, ACTION='read')
+    call myopen(UNIT=fileDesc, FILE=filename2, STATUS='old', IOSTAT=openStat, &
+    ACTION='read',SHARE='DENYRW')
     IF (openStat /= 0) THEN
         ! file doesn't exist. This is an error
         call myclose(fileDesc)
@@ -228,13 +239,14 @@ CONTAINS
         stop 0
     END IF
 
-    count=1
+    count=1; wait = 0;
     DO WHILE (count <= fileDIM(1))
         ! read until we run out of lines. Possible that file is really large (by mistake), so
         ! stop if we've reached the maximum number of iterations
         read(fileDesc,*,IOSTAT=openStat,end=45) myarray2(count,:)
         IF(openStat /= 0) THEN
-          PRINT*,'myread2, read(fileDesc,*,IOSTAT=openStat,end=45)', openStat
+          wait = wait + 1
+          IF(mod(wait,10)==0) PRINT*,'myread2, read(fileDesc,*,IOSTAT=openStat,end=45)', openStat
           openStat=0
        ELSE
         count=count+1
@@ -261,7 +273,8 @@ CONTAINS
       write (*,*) "ERROR THE SECOND DIMENSION OF FILE >1000, FORMAT STATEMENT CURRENTLY USES CANNOT HANDLE THIS SIZE"
     end if
 
-    call myopen(UNIT=fileDesc, FILE=filename2, STATUS='replace', IOSTAT=openStat, ACTION='write')
+    call myopen(UNIT=fileDesc, FILE=filename2, STATUS='replace', IOSTAT=openStat, &
+     ACTION='write',SHARE='DENYRW')
     DO i=1,fileDIM(1)
       WRITE(fileDesc,100) (myarray2(i,j), j=1,fileDIM(2))
     END DO

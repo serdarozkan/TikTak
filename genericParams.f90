@@ -151,7 +151,8 @@ CONTAINS
             call parseConfig(isUpdate, config)
 
             !print to internal config file so we have values for warm starts.
-            call myopen(UNIT=fileDesc, FILE='internalConfig.dat', STATUS='replace', IOSTAT=openStat, ACTION='write')
+            call myopen(UNIT=fileDesc, FILE='internalConfig.dat', STATUS='replace', &
+             IOSTAT=openStat, ACTION='write',SHARE='DENYRW')
             write(fileDesc,*) p_nx
             write(fileDesc,*) p_nmom
             write(fileDesc,*) p_maxeval
@@ -273,7 +274,8 @@ CONTAINS
         CHARACTER(LEN=100) :: line
         LOGICAL :: parsedLine
 
-        call myopen(UNIT=fileDesc, FILE=configFile, STATUS='old', IOSTAT=openStat, ACTION='read')
+        call myopen(UNIT=fileDesc, FILE=configFile, STATUS='old', IOSTAT=openStat, &
+        ACTION='read',SHARE='DENYRW')
         IF (openStat /= 0) THEN
             ! file doesn't exist. This is an error
             print *,"<genericParams.parseConfig()> Error: unable to open file:",configFile

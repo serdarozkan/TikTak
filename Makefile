@@ -22,12 +22,12 @@ F90CFLAGS = $(MYFLAGS) $(OPT)
 #F90CFLAGS = $(OPT)
 F90LFLAGS = $(OPT)
 
-EXE_SH = GlobalSearch
+EXE_SH = TiktakGlobalSearch
 
 #----------
 # -2- objects
 #     List files from least USE to most USE
-objects = nrtype.o stateControl.o genericParams.o utilities.o simplex.o objective.o minimize.o GlobalSearch.o
+objects = nrtype.o stateControl.o genericParams.o utilities.o simplex.o objective.o minimize.o TiktakGlobalSearch.o
 
 #--------------------------------------------
 # -3- Define how to create the exe file
@@ -68,7 +68,7 @@ objective.o: objective.f90
 minimize.o: minimize.f90
 	$(FC) -c $(F90CFLAGS) $<
 
-GlobalSearch.o:  GlobalSearch.f90
+TiktakGlobalSearch.o:  TiktakGlobalSearch.f90
 	$(FC) -c $(F90CFLAGS) $<
 
 #---------------------------------------------
