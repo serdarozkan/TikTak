@@ -50,15 +50,15 @@ The estimation required about N=1000 restarts (or local optimizations) in the gl
  ### 2. Executing the program
  -----------------------------------
  - To execute the program, run
- 	./GlobalSearch <-1|0|1|2|3|4|5> configfile <a|b|d>
+ 	./TiktakGlobalSearch <-1|0|1|2|3|4|5> configfile <a|b|d>
  - For help, run
- 	./GlobalSearch
+ 	./TiktakGlobalSearch
 
 | State | Explanation |
 | ------ | ------ |
 | -1    | exit state: end all running instances
 |  0 |   cold start:  The first invocation of the program, that will set up all the parallel helper files. Should always be the parameter when this is the first attempt at solving the problem.
-|  1 |  warm start: after one process is already running, all helper programs should be invoked using a warm start. User cannot specify a config file for warm starts, thus it can only be called as: ./GlobalSearch 1 <a|b|d>.
+|  1 |  warm start: after one process is already running, all helper programs should be invoked using a warm start. User cannot specify a config file for warm starts, thus it can only be called as: ./TiktakGlobalSearch 1 <a|b|d>.
 |   2 |  update number of Sobol points: update the Sobol point parameters over which to search as well as the local optimizations from these Sobol points, but assume everything else in the config file has not been changed.
 |   3 |  update number of local minimizations: Increase the number of local minimizations but keep everything else same in the config file. This option uses the results from previously found local minimums.
 |  4 |  Just evaluate the objective function once for given initial guess in the config file with diagnostic option.
