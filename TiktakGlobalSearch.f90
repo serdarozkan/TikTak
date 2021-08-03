@@ -237,7 +237,7 @@ PROGRAM TiktakGlobalSearch
             CASE (3)
               !Now everyone should be solving the function at the
               !sobol points.
-              call solveAtSobolPoints(seqno,complete)
+              call solveAtSobolPoints(complete)
               IF (complete) THEN
                   ! If we have completed solving the objective function
                   ! at each sobol point, then check  if everything is
@@ -282,7 +282,7 @@ PROGRAM TiktakGlobalSearch
               END IF
             CASE (5)
               ! We compute missing sobol points.
-              call solveMissingSobol(seqno,complete)
+              call solveMissingSobol(complete)
               IF (complete) THEN
                   ! we have finished computing all sobol points (including the missing).
                   ! Lead terminal sort the sobol points - the algorithm will use the best n points
@@ -305,7 +305,7 @@ PROGRAM TiktakGlobalSearch
               IF(LeadTerm==1) THEN
                 write(errorString, *) "<chooseSobol> Now we choose the sobol points"
                 call writeToLog(trim(errorString)); print*,trim(errorString)
-                call chooseSobol(seqno)
+                call chooseSobol
                 call setState(7, 'state.dat')
                 cycle
               ELSE
@@ -313,7 +313,7 @@ PROGRAM TiktakGlobalSearch
                 cycle
               END IF
             CASE (7)
-              call LocalMinimizations(seqno,alg,complete)
+              call LocalMinimizations(alg,complete)
               IF (complete) THEN
                   ! If we have minimized at every point, look for any
                   ! missing points
@@ -328,19 +328,59 @@ PROGRAM TiktakGlobalSearch
                 write(errorString,*) "EXIT STATE: COMPLETE=FALSE from LocalMinimizations."
                 call exitState(trim(errorString))
               END IF
+
             CASE (8)
-                ! all instances search for the missing points.
-                call SLEEP(10)
-                call findMissingSearch(COMPLETE)
-                IF (COMPLETE) THEN
-                  ! There are no missing local minimizations
-                  ! perform the last optimization
-                  call lastSearch(seqNo)
-                  EXIT
-                ELSE
-                  write(errorString,*) "EXIT STATE: COMPLETE=FALSE from findMissingSearch."
-                  call exitState(trim(errorString))
-                END IF
+              ! Lead terminal finds the missing sobol points and write their identifiers to.
+              ! missingSobol.dat. The other terminals wait until this is finished.
+              ! If there are no missing sobol points lead terminal prepares for local minimization.
+              IF(LeadTerm==1) THEN
+                  call setupMissingSearch(complete_status)
+                  IF (complete_status==1) THEN
+                      ! Lead terminal finished finding missing local search points.
+                      ! There are missing local search points so we run solveMissingSearch
+                      call setState(9, 'state.dat')
+                      cycle
+                  ELSEIF(complete_status==2) THEN
+                    ! Lead terminal did not find missing sobol points.
+                    ! We skip to chooseSobol
+                    write(errorString, *) " There is no missing local search points."
+                    call writeToLog(errorString); print*, trim(errorString)
+                    call setState(10, 'state.dat')
+                    cycle
+                  ELSE
+                    write(errorString,*) "EXIT STATE: COMPLETE=FALSE from setupMissingSearch."
+                    call exitState(trim(errorString))
+                  END IF
+              ELSE
+                  call waitState(9)
+                  cycle
+              END IF
+            CASE (9)
+              ! We solve for missing local searches.
+              call SolveMissingSearch(COMPLETE)
+              IF (complete) THEN
+                  ! we have finished computing all sobol points (including the missing).
+                  ! Lead terminal sort the sobol points - the algorithm will use the best n points
+                  ! as specified in the configuration file.
+                  ! Other instances wait until lead terminal is done with picking those points.
+                  IF(LeadTerm==1) THEN
+                    write(errorString, *) "<SolveMissingSearch> Now we finished all local searches &
+                                          (including the missing)."
+                    call writeToLog(trim(errorString)); print*,trim(errorString)
+                    call setState(10, 'state.dat')
+                    cycle
+                  ELSE
+                    call waitState(10)
+                    cycle
+                  END IF
+              ELSE
+                write(errorString,*) "EXIT STATE: COMPLETE=FALSE from solveMissingSearch."
+                call exitState(trim(errorString))
+              END IF
+            CASE (10)
+                ! There are no missing local minimizations perform the last optimization
+                call lastSearch
+                EXIT
             CASE DEFAULT
               write(errorString, *) "<main> : Error, unknown state: ", currentState
               call writeToLog(trim(errorString)); print*,trim(errorString)
@@ -351,12 +391,11 @@ PROGRAM TiktakGlobalSearch
     write(errorString, *) seqNo," has no more tasks."
     call writeToLog(trim(errorString)); print*, trim(errorString)
 contains
-    SUBROUTINE solveAtSobolPoints(seqNo, complete)
+    SUBROUTINE solveAtSobolPoints(complete)
         !This routine solves the given function at the sobol point
         !indicated in lastSobol.dat If we have solved all points,
         !then complete is returned as true.
         implicit none
-        INTEGER(I4B), INTENT(IN) :: seqNo
         LOGICAL, INTENT(OUT) :: complete
         INTEGER(I4B) :: whichPoint, openStat,numrows,legitSobol
         REAL(DP) :: fval
@@ -420,14 +459,14 @@ contains
 
     END SUBROUTINE solveAtSobolPoints
 
-    SUBROUTINE LocalMinimizations(seqNo, algor, complete)
+    SUBROUTINE LocalMinimizations(algor, complete)
         !This routine searches for a minimum at the next
         !point, as given by lastParam.dat, using the algorithm
         !specified in algor. If we have gone through all the
         !parameter guesses, complete is set to TRUE. Otherwise,
         !it is set to .FALSE.
         implicit none
-        INTEGER(I4B), INTENT(IN) :: seqNo, algor
+        INTEGER(I4B), INTENT(IN) :: algor
         LOGICAL, INTENT(OUT) :: complete
         INTEGER(I4B) :: i,k, whichPoint, lotPoint
         REAL(DP), DIMENSION(p_nx) :: evalParam
@@ -478,7 +517,7 @@ contains
             call writeToLog(errorString);  print*, trim(errorString)
 
             !We now have the point at which to solve. So, finish the search
-            call completeSearch(seqNo, algor, whichPoint, evalParam)
+            call completeSearch(algor, whichPoint, evalParam)
           END IF
           whichPoint = getNextNumber('lastParam.dat')
           print*,"whichPoint in LocalMinimizations=", whichPoint
@@ -493,9 +532,9 @@ contains
 
     END SUBROUTINE LocalMinimizations
 
-    SUBROUTINE completeSearch (seqNo, algor, whichPoint, evalParam)
+    SUBROUTINE completeSearch (algor, whichPoint, evalParam)
         !This subroutine completes the search given a specific point at which to evaluate.
-        INTEGER(I4B), INTENT(IN) :: seqNo, algor, whichPoint
+        INTEGER(I4B), INTENT(IN) :: algor, whichPoint
         INTEGER(I4B) :: openStat,nwrite=1
         REAL(DP), DIMENSION(p_nx), INTENT(INOUT) :: evalParam
         REAL(DP) :: fn_val
@@ -582,12 +621,11 @@ contains
         amoeba_pt = xT(ia,:)
     END SUBROUTINE runAmoeba
 
-    SUBROUTINE lastSearch(seqNo)
+    SUBROUTINE lastSearch
         !This routine solves the given function for the last time,
         !taking as the initial point the best point we have found
         !so far. It always uses the same algorithm, bobyqa.
         implicit none
-        INTEGER(I4B), INTENT(IN) :: seqNo
         INTEGER(I4B) :: i, openStat,whichPoint,nwrite=1
         REAL(DP) :: evalParam(p_nx),temp(p_nx+4)
         REAL(DP) :: rhobeg, rhoend, fn_val
@@ -788,11 +826,11 @@ contains
       deallocate(qrdraw)
     END SUBROUTINE setupSobol
 
-    SUBROUTINE chooseSobol(seqno)
+    SUBROUTINE chooseSobol
         !This routine returns the best set of parameters we have solved so far, as
         !stored in searchSaved.dat
         !This is only called by the leader terminal/instance
-        INTEGER(I4B), INTENT(IN) :: seqno
+
         INTEGER(I4B) :: i,j,numrows,legitSobol
         LOGICAL :: allFinished
         INTEGER  :: num_pos_sob ! (Hopefully) Maximum number of rows in 'sobolFnVal.dat'
@@ -923,13 +961,12 @@ contains
 
     END SUBROUTINE setupMissingSobol
 
-    SUBROUTINE solveMissingSobol(seqno,allFinished)
+    SUBROUTINE solveMissingSobol(allFinished)
         !Called by the main instance. Waits until function values have been derived
         !for all sobol points. If some points are missing (often due to a warm start
         !instance having been killed), solve for it.
         !This is only run by the leader terminal/instance.
         LOGICAL, INTENT(OUT) :: allFinished
-        INTEGER(I4B), INTENT(IN) :: seqno
         INTEGER(I4B) :: openStat, i,missing,numrows,legitSobol
         CHARACTER(LEN=1000) :: errorString
         REAL(DP) :: fval
@@ -994,67 +1031,110 @@ contains
         deallocate(sobol_trial)
 
 7000    format(i8, 200f40.20)
-270     format(i10)
 
     END SUBROUTINE solveMissingSobol
 
-    SUBROUTINE findMissingSearch(COMPLETE)
-        !Called by the main instance. Waits until function values have been derived
-        !for all sobol points. If some points are missing (often due to a warm start
-        !instance having been killed), solve for it.
+    SUBROUTINE setupMissingSearch(complete_status)
+        !Called by the main instance. Waits until all local minimizations are done.
+        !If some are missing (often due to a warm start
+        !instance having been killed), find those points.
+        !This is only run by the leader terminal/instance.
+        INTEGER, INTENT(OUT) :: complete_status
+        INTEGER(I4B) :: openStat, i,missing,numrows,nummiss,seqn,lastP
+        LOGICAL, DIMENSION(p_maxpoints) :: solvedPoints
+        CHARACTER(LEN=1000) :: errorString
+
+        complete_status=0
+
+        !we aren't actually guaranteed that all searches are complete. So
+        !find out which local searches are missing, and have all processes go back and solve them
+        solvedPoints = .FALSE.
+
+        call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', &
+        IOSTAT=openStat, ACTION='read',SHARE='DENYRW')
+        DO
+            read(fileDesc,270, END=10) seqn, lastP
+            IF (lastP > p_maxpoints) THEN
+              !This shouldn't happen. let's note the error and stop.
+              write(errorString, *) seqNo, " found point: ",lastP,"greater than max: ",p_maxpoints
+              write(errorString, *) seqNo, "ERROR: This shouldn't happen. Check searchResults.dat."
+              call writeToLog(trim(errorString))
+              cycle
+!             call exitState(errorString)
+            END IF
+            IF (lastP>0) solvedPoints(lastP) = .TRUE.
+        END DO
+10      call myclose(fileDesc)
+
+        missing=count(solvedPoints .eqv. .FALSE.)
+
+        IF(missing>0) THEN
+          !Add the local search points that need to be solved.
+          call myopen(unit=fileDesc, file='missingSearch.dat', STATUS='replace', &
+          IOSTAT=openStat, ACTION='write',SHARE='DENYRW')
+          DO i=1,p_maxpoints
+            IF(solvedPoints(i)) THEN
+                cycle
+            END IF
+            write(fileDesc,271) i
+          END DO
+          call myclose(fileDesc)
+          complete_status=1
+        ELSE
+          call myopen(unit=fileDesc, file='missingSearch.dat', STATUS='replace', &
+           IOSTAT=openStat, ACTION='write',SHARE='DENYRW')
+          call myclose(fileDesc)
+          complete_status=2
+        ENDIF
+270     format(2i10)
+271     format(i10)
+
+    END SUBROUTINE setupMissingSearch
+
+    SUBROUTINE SolveMissingSearch(COMPLETE)
+        !Called by all instances. Solves the missing local searches.
         LOGICAL, INTENT(OUT) :: COMPLETE
-        INTEGER(I4B) :: openStat, lastP, i,nummiss,lotPoint,seqn
+        INTEGER(I4B) :: openStat, lastP, i,missing,lotPoint,seqn
         LOGICAL :: solvedPoints(p_maxpoints)
-        REAL(DP) :: evalParam(p_nx)
+        REAL(DP) :: evalParam(p_nx),missingSearch(p_maxpoints,1)
 
         allocate(x_starts(p_maxpoints,p_nx+1))
         call myread2(x_starts,'x_starts.dat')
 
+        LeadTerm=0
         solvedPoints = .FALSE.
-        do while(any(solvedPoints .eqv. .FALSE.))
+        do
+          call myread2(missingSearch,'missingSearch.dat',missing)
+          print*, "missing", missing
+          if(missing>0) THEN
+            if(missing>1) THEN
+              call mywrite2(missingSearch(2:missing,:),'missingSearch.dat')
+            ELSE
+              call myopen(unit=fileDesc, file='missingSearch.dat', STATUS='replace', &
+               IOSTAT=openStat, ACTION='write',SHARE='DENYRW')
+              call myclose(fileDesc)
+            ENDIF
+            lastP=INT(missingSearch(1,1))
+            evalParam = getModifiedParam(p_maxpoints, x_starts(lastP,2:), p_searchType, lotPoint)
+            write(errorString, *) seqNo," searching using sobol point ",lastP," and best point ",lotPoint
+            call writeToLog(errorString);  print*,errorString
 
-          call myopen(UNIT=fileDesc, FILE='searchResults.dat', STATUS='unknown', &
-          IOSTAT=openStat, ACTION='read',SHARE='DENYRW')
-          DO
-            READ (fileDesc,7460, END=10) seqn, lastP
-            IF (lastP > p_maxpoints) THEN
-                !This shouldn't happen. let's note the error and stop.
-                write(errorString, *) seqNo, " found point: ",lastP,"greater than max: ",p_maxpoints
-                call myclose(fileDesc)
-                call exitState(errorString)
-            END IF
-            IF (lastP>0) solvedPoints(lastP) = .TRUE.
-          END DO
-  10      call myclose(fileDesc)
-
-          nummiss=count(solvedPoints .eqv. .FALSE.)
-
-          IF(nummiss==0) EXIT ! No missing local minimizations.
-
-          !There are missing local minimizations.
-          write(errorString, *) "Missing local search: ", nummiss, " missing local searches."
-          call writeToLog(errorString);  print*,errorString
-
-          DO i=1,p_maxpoints
-              IF(solvedPoints(i))THEN
-                  cycle
-              END IF
-              evalParam = getModifiedParam(p_maxpoints, x_starts(i,2:), p_searchType, lotPoint)
-              write(errorString, *) seqNo," searching using sobol point ",i," and best point ",lotPoint
-              call writeToLog(errorString);  print*,errorString
-
-              !We now have the point at which to solve. So, finish the search
-              call completeSearch(seqNo, alg, i, evalParam)
-              solvedPoints(i) = .TRUE.
-              exit
-          END DO
-          solvedPoints = .FALSE.
-        ENDDO
-
-        COMPLETE = .TRUE.
-
-7460    format(3i10, 200f40.20)
-    END SUBROUTINE findMissingSearch
+            !We now have the point at which to solve. So, finish the search
+            call completeSearch(alg, lastP, evalParam)
+            if(missing==1) THEN
+              LeadTerm=1
+              COMPLETE = .TRUE.
+              EXIT
+            ENDIF
+          ENDIF
+          IF(missing==0) THEN
+            LeadTerm=0
+            COMPLETE = .TRUE.
+            EXIT
+          ENDIF
+        END DO
+        deallocate(x_starts)
+    END SUBROUTINE SolveMissingSearch
 
     SUBROUTINE parseCommandLine(args_missing)
         !As the name suggests, parse the command line
