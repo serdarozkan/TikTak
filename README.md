@@ -38,7 +38,7 @@
 
 #### Parallel Performance
 
-Here is an example of the scaling performance of TikTak on an SMM estimation problem with 1200+ moments and 7 parameters (taken from [Guvenen, Karahan, Ozkan, Song](https://nbviewer.jupyter.org/github/serdarozkan/papers/blob/master/GKOS_2021.pdf) (2021, specification in Table IV, column 2).
+Here is an example of the scaling performance of TikTak on an SMM estimation problem with 1200+ moments and 7 parameters (taken from [Guvenen, Karahan, Ozkan and Song](https://nbviewer.jupyter.org/github/serdarozkan/papers/blob/master/GKOS_2021.pdf) (2021, specification in Table IV, column 2).
 
 The figure below shows the completion time of TikTak against the number of cores used in parallel, with the condition that the objective attained is always within 1% of the single-core value. The log-log plot is almost linear from 1 to 32 cores, with a slope of -0.976 showing almost linear scaling. Doubling the number of cores from 32 to 64 yields a final objective value that exceeds the 1% threshold.
 
