@@ -1,7 +1,7 @@
 # Makefile to build mpi class examples
 # -1-- macros
 #FC = $(F90)
-FC = ifort
+FC = ifort -L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
 
 #--
 # increasing the stacksize tio see if problem could be fixed
