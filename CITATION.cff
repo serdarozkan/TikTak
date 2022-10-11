@@ -1,12 +1,11 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
+- family-names: "Guvenen"
+  given-names: "Fatih"
 - family-names: "Ozkan"
   given-names: "Serdar"
   orcid: "https://orcid.org/0000-0001-6364-9606"
-- family-names: "Guvenen"
-  given-names: "Fatih"
-  orcid: "https://orcid.org/0000-0000-0000-0000"
 title: "TikTak: A multistart global optimization algorithm"
 version: 1.0
 date-released: 2021-03-17
