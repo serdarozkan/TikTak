@@ -54,24 +54,35 @@ PROGRAM TiktakGlobalSearch
     !           Prev States: 1, 2
     !           Next States: 4 or 5
     !      4: This state finds if there are any missing sobol points.
-    !         If not then this state sorts the sobol points by minimum objective function value.
-    !         Only the "main driver" program can be in this state.
+    !         Only the "main driver" program can be in this state. 
+    !         The "main driver" finds and prepares all the missing sobol points  for State 5.
+    !         If no missing sobol points, then  set state to 6.
     !           Prev States: 3
     !           Next States: 5 or 6
-    !      5: This state sorts the sobol points by minimum objective function value
+    !      5: This state solves the objective function at the missing sobol points.
+    !           Prev States: 3 or 4
+    !           Next States: 6 or 7
+    !      6: This state sorts the sobol points by minimum objective function value
     !         Only the "main driver" program can be in this state.
-    !           Prev States: 4
-    !           Next States: 6
-    !      6: This state tries to minimize the objective function starting at
+    !           Prev States: 5
+    !           Next States: 7
+    !      7: This state runs local minimization starting from
     !         the smallest calculated sobol value, and iterating through the
     !         number of points specified in the config file.
-    !           Prev States: 4 or 5
-    !           Next States: 7
-    !      7: All instances: Check if any local minimization points have been missed.
-    !         If so, run local minimization around them. After this, the program
-    !         continues with taking the minimum objective value found, and restarting
-    !         the minimization at this point one last time.
-    !           Prev State: 5
+    !           Prev States: 5 or 6
+    !           Next States: 8
+    !      8: This state finds if there are any missing local minimization.
+    !         Only the "main driver" program can be in this state. 
+    !         The "main driver" finds and prepares all the missing local minimizations for State 9.
+    !         If no missing sobol points, then  set state to 10.
+    !           Prev States: 7
+    !           Next States: 9 or 10
+    !      9: This state runs local minimization at the missing points identified in State 8.
+    !           Prev States: 8
+    !           Next States: 10
+    !      10: All instances: This is the last step in the program that all drivers run before exit.
+    !         They run a local minimization at the best point so far one last time.
+    !           Prev State: 9
     !           Next States: Exit
 
     USE nrtype
