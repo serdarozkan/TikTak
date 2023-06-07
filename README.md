@@ -20,7 +20,7 @@
  -----------------------------------
 - The main program for the TikTak global optimization algorithm.
 - This algorithm evolved out of Fatih Guvenen's joint projects with Tony Smith, Serdar Ozkan, Fatih Karahan, Tatjana Kleineberg, and Antoine Arnaud.
-- You can see the description of this algorithm in this [paper](https://fguvenendotcom.files.wordpress.com/2019/09/agk2019-september-nber-submit.pdf).
+- You can see the description of this algorithm in this [paper]( https://www.fatihguvenen.com/s/AGK2022_v57_FG.pdf).
 - The code provided here has been modified from earlier versions by Arun Kandanchatha and Serdar Ozkan. It contains the most efficient implementation of TikTak to date.
 - Great care was taken to make it as compliant with Fortran 90 as possible, but there may be a couple of invocations to Fortran 95 intrinsics.
 - For all bugs please contact serdarozkan@gmail.com (www.serdarozkan.me)
