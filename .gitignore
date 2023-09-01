@@ -3,3 +3,4 @@
 *.dat
 GlobalSearch
 logFile.txt
+.DS_Store
